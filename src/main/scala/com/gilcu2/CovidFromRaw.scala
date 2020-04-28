@@ -19,15 +19,25 @@ object CovidFromRaw extends LazyLogging {
 
     val raw=readCSVRawResults("data/query-emergencias_20200413_19 - Raw.csv")
 
-    val rawKO=raw.filter(col("Estado")==="KO").withColumn("KO",col("Count"))
+    val rawKO=raw.filter(col("Estado")==="KO")
+      .withColumn("KO",col("Count"))
+        .drop("Estado").drop("Count")
 
     rawKO.show
 
-    val rawOK=raw.filter(col("Estado")==="OK").withColumn("OK",col("Count"))
+    val rawOK=raw.filter(col("Estado")==="OK")
+      .withColumn("OK",col("Count"))
+      .drop("Estado").drop("Count")
 
     rawOK.show
 
+    val join=rawKO.join(rawOK, Seq("Fecha","Provincia","Destino","Comunidad"),"outer")
 
+    join.show()
+
+    val grouped=join.groupBy("Comunidad","Destino").sum("OK","KO")
+        .orderBy("Comunidad")
+    grouped.show(50)
 
     endMain(beginTime)
   }
